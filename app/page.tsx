@@ -1,43 +1,36 @@
 import { Suspense } from 'react';
 import { supabase } from '@/app/lib/supabase';
+import NewsFeedClient, { Article } from '@/app/components/NewsFeedClient';
 
-// Separate component to handle the data fetching
-async function ArticlesList() {
-  const { data: articles, error } = await supabase
+async function NewsFeed() {
+  const { data, error } = await supabase
     .from('articles')
-    .select('*');
+    .select('*')
+    .order('created_at', { ascending: false });
 
   if (error) {
-    return <div className="p-8 text-red-500">Error loading articles: {error.message}</div>;
+    return (
+      <div className="flex h-screen items-center justify-center p-8 text-red-500">
+        Error loading news: {error.message}
+      </div>
+    );
   }
 
-  return (
-    <div className="space-y-6">
-      {articles?.map((article) => (
-        <div key={article.id} className="p-4 border rounded-xl shadow-sm space-y-2">
-          <span className="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-1 rounded">
-            {article.category}
-          </span>
-          <h2 className="text-lg font-bold">{article.title}</h2>
-          <p className="text-sm text-gray-700">{article.summary}</p>
-          {article.why_it_matters && (
-            <p className="text-sm text-gray-900 font-semibold bg-gray-50 p-2 rounded">
-              💡 <span className="underline">Why it matters:</span> {article.why_it_matters}
-            </p>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+  const articles: Article[] = data ?? [];
+  return <NewsFeedClient articles={articles} />;
 }
 
-// Main page component wrapped in Suspense
 export default function Home() {
   return (
-    <main className="min-h-screen p-8 max-w-xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold border-b pb-2">Straight Facts - Test Feed</h1>
-      <Suspense fallback={<div className="p-8 text-gray-500">Loading straight facts...</div>}>
-        <ArticlesList />
+    <main className="bg-black min-h-screen">
+      <Suspense
+        fallback={
+          <div className="flex h-screen items-center justify-center text-gray-400">
+            Loading Straight Facts...
+          </div>
+        }
+      >
+        <NewsFeed />
       </Suspense>
     </main>
   );
